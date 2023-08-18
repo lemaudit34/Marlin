@@ -28,25 +28,25 @@
 /**
  * Marlin release version identifier
  */
-//#define SHORT_BUILD_VERSION "bugfix-2.1.x"
+#define SHORT_BUILD_VERSION "VER 2.1.3"
 
 /**
  * Verbose version identifier which should contain a reference to the location
  * from where the binary was downloaded or the source code was compiled.
  */
-//#define DETAILED_BUILD_VERSION SHORT_BUILD_VERSION
+#define DETAILED_BUILD_VERSION SHORT_BUILD_VERSION
 
 /**
  * The STRING_DISTRIBUTION_DATE represents when the binary file was built,
  * here we define this default string as the date where the latest release
  * version was tagged.
  */
-//#define STRING_DISTRIBUTION_DATE "2023-08-18"
+#define STRING_DISTRIBUTION_DATE "2023-08-18"
 
 /**
  * Defines a generic printer name to be output to the LCD after booting Marlin.
  */
-//#define MACHINE_NAME "3D Printer"
+#define MACHINE_NAME "Custom U20"
 
 /**
  * The SOURCE_CODE_URL is the location where users will find the Marlin Source
@@ -59,7 +59,7 @@
 /**
  * Default generic printer UUID.
  */
-//#define DEFAULT_MACHINE_UUID "cede2a2f-41a2-4748-9b12-c55c62f367ff"
+#define DEFAULT_MACHINE_UUID "d7c94ac1-256d-489a-a0c9-51c0652d4c2a"
 
 /**
  * The WEBSITE_URL is the location where users can get more information such as
