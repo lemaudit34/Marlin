@@ -680,9 +680,9 @@
     #define DEFAULT_Ki_LIST {   1.08,   1.08 }
     #define DEFAULT_Kd_LIST { 114.00, 114.00 }
   #else
-    #define DEFAULT_Kp  14.74
-    #define DEFAULT_Ki   0.8
-    #define DEFAULT_Kd  68.22
+    #define DEFAULT_Kp  20.2
+    #define DEFAULT_Ki   2.20
+    #define DEFAULT_Kd  46.46
   #endif
 #else
   #define BANG_MAX 255    // Limit hotend current while in bang-bang mode; 255=full current
@@ -1234,7 +1234,7 @@
  * Override with M92
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 78.99, 79.72, 424.9, 95 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 78.99, 79.72, 399.6, 429.9 }
 
 /**
  * Default Max Feed Rate (linear=mm/s, rotational=°/s)
@@ -1564,7 +1564,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET { 30.5, -42.1, 0 }
+#define NOZZLE_TO_PROBE_OFFSET { -30.5, -42.1, -5.3 }
 
 // Enable and set to use a specific tool for probing. Disable to allow any tool.
 #define PROBING_TOOL 0
