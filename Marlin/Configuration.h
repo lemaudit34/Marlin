@@ -61,7 +61,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "(V2.1.3, Havez config)" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "(V2.1.4, Havez config)" // Who made the changes.
 #define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 // @section machine
