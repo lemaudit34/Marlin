@@ -1702,7 +1702,7 @@
  * A total of 2 does fast/slow probes with a weighted average.
  * A total of 3 or more adds more slow probes, taking the average.
  */
-#define MULTIPLE_PROBING 2
+//#define MULTIPLE_PROBING 2
 //#define EXTRA_PROBING    1
 
 /**
@@ -1751,7 +1751,7 @@
  * These options are most useful for the BLTouch probe, but may also improve
  * readings with inductive probes and piezo sensors.
  */
-//#define PROBING_HEATERS_OFF       // Turn heaters off when probing
+#define PROBING_HEATERS_OFF       // Turn heaters off when probing
 #if ENABLED(PROBING_HEATERS_OFF)
   //#define WAIT_FOR_BED_HEATER     // Wait for bed to heat back up between probes (to improve accuracy)
   //#define WAIT_FOR_HOTEND         // Wait for hotend to heat back up between probes (to improve accuracy & prevent cold extrude)
@@ -1764,7 +1764,7 @@
 // Require minimum nozzle and/or bed temperature for probing
 #define PREHEAT_BEFORE_PROBING
 #if ENABLED(PREHEAT_BEFORE_PROBING)
-  #define PROBING_NOZZLE_TEMP 200   // (°C) Only applies to E0 at this time
+  #define PROBING_NOZZLE_TEMP 15   // (°C) Only applies to E0 at this time
   #define PROBING_BED_TEMP     50
 #endif
 
