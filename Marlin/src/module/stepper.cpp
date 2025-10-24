@@ -21,33 +21,25 @@
  */
 
 /**
- * stepper.cpp - A singleton object to execute motion plans using stepper motors
- * Marlin Firmware
+ * stepper.cpp - Singleton to execute motion plans using stepper motors
  *
- * Derived from Grbl
- * Copyright (c) 2009-2011 Simen Svale Skogsrud
+ * Marlin uses the Bresenham algorithm. For a detailed explanation of theory and
+ * method see https://www.cs.helsinki.fi/group/goa/mallinnus/lines/bresenh.html
  *
- * Grbl is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Grbl is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Grbl.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-/**
  * Timer calculations informed by the 'RepRap cartesian firmware' by Zack Smith
  * and Philipp Tiefenbacher.
+ *
+ * Jerk controlled movements planner added Apr 2018 by Eduardo José Tagle.
+ * Equations based on Synthethos TinyG2 sources, but the fixed-point
+ * implementation is new, as we are running the ISR with a variable period.
+ * Also implemented the Bézier velocity curve evaluation in ARM assembler,
+ * to avoid impacting ISR speed.
+ *
+ * Fixed-Time Motion concept contributed by Ulendo with integration and
+ * overhaul optimizations by @thinkyhead, @narno2202, @dbuezas.
  */
 
-/**
- *         __________________________
+/**        __________________________
  *        /|                        |\     _________________         ^
  *       / |                        | \   /|               |\        |
  *      /  |                        |  \ / |               | \       s
@@ -68,19 +60,6 @@
  *    - Cruise while step_events_completed < block->decelerate_start.
  *    - Decelerate after that, until all steps are completed.
  *    - Reset the trapezoid generator.
- */
-
-/**
- * Marlin uses the Bresenham algorithm. For a detailed explanation of theory and
- * method see https://www.cs.helsinki.fi/group/goa/mallinnus/lines/bresenh.html
- */
-
-/**
- * Jerk controlled movements planner added Apr 2018 by Eduardo José Tagle.
- * Equations based on Synthethos TinyG2 sources, but the fixed-point
- * implementation is new, as we are running the ISR with a variable period.
- * Also implemented the Bézier velocity curve evaluation in ARM assembler,
- * to avoid impacting ISR speed.
  */
 
 #include "stepper.h"
@@ -2474,7 +2453,7 @@ hal_timer_t Stepper::block_phase_isr() {
          *  isPowered - True when a move is powered.
          *  isEnabled - laser power is active.
          *
-         * Laser power variables are calulated and stored in this block by the planner code.
+         * Laser power variables are calculated and stored in this block by the planner code.
          *  trap_ramp_active_pwr - the active power in this block across accel or decel trap steps.
          *  trap_ramp_entry_incr - holds the precalculated value to increase the current power per accel step.
          */
@@ -3007,7 +2986,7 @@ hal_timer_t Stepper::block_phase_isr() {
       static int32_t smoothed_vals[SMOOTH_LIN_ADV_EXP_ORDER] = {0};
 
       for (uint8_t i = 0; i < SMOOTH_LIN_ADV_EXP_ORDER; i++) {
-        // Approximate gaussian smoothing via higher order exponential smoothing
+        // Approximate Gaussian smoothing via higher order exponential smoothing
         smoothed_vals[i] += MULT_Q(30, la_step_rate - smoothed_vals[i], extruder_advance_alpha_q30[E_INDEX_N(active_extruder)]);
         la_step_rate = smoothed_vals[i];
       }
@@ -3276,7 +3255,7 @@ void Stepper::init() {
    * Calculate a fixed point factor to apply to the signal and its echo
    * when shaping an axis.
    */
-  void Stepper::set_shaping_damping_ratio(const AxisEnum axis, const_float_t zeta) {
+  void Stepper::set_shaping_damping_ratio(const AxisEnum axis, const float zeta) {
     // From the damping ratio, get a factor that can be applied to advance_dividend for fixed-point maths.
     // For ZV, we use amplitudes 1/(1+K) and K/(1+K) where K = exp(-zeta * π / sqrt(1.0f - zeta * zeta))
     // which can be converted to 1:7 fixed point with an excellent fit with a 3rd-order polynomial.
@@ -3307,7 +3286,7 @@ void Stepper::init() {
     return -1;
   }
 
-  void Stepper::set_shaping_frequency(const AxisEnum axis, const_float_t freq) {
+  void Stepper::set_shaping_frequency(const AxisEnum axis, const float freq) {
     // enabling or disabling shaping whilst moving can result in lost steps
     planner.synchronize();
 
@@ -3565,15 +3544,13 @@ void Stepper::report_positions() {
   void Stepper::ftMotion_stepper() {
 
     // Check if the buffer is empty.
-    ftMotion.sts_stepperBusy = (ftMotion.stepperCmdBuff_produceIdx != ftMotion.stepperCmdBuff_consumeIdx);
-    if (!ftMotion.sts_stepperBusy) return;
+    ftMotion.stepperCmdBuffHasData = (ftMotion.stepperCmdBuff_produceIdx != ftMotion.stepperCmdBuff_consumeIdx);
+    if (!ftMotion.stepperCmdBuffHasData) return;
 
     // "Pop" one command from current motion buffer
     const ft_command_t command = ftMotion.stepperCmdBuff[ftMotion.stepperCmdBuff_consumeIdx];
     if (++ftMotion.stepperCmdBuff_consumeIdx == (FTM_STEPPERCMD_BUFF_SIZE))
       ftMotion.stepperCmdBuff_consumeIdx = 0;
-
-    if (abort_current_block) return;
 
     USING_TIMED_PULSE();
 
@@ -3592,8 +3569,7 @@ void Stepper::report_positions() {
 
     if (last_set_direction != last_direction_bits) {
       // Apply directions (generally applying to the entire linear move)
-      #define _FTM_APPLY_DIR(A) if (last_direction_bits.A != last_set_direction.A) \
-                                  SET_STEP_DIR(A);
+      #define _FTM_APPLY_DIR(A) if (last_direction_bits.A != last_set_direction.A) SET_STEP_DIR(A);
       LOGICAL_AXIS_MAP(_FTM_APPLY_DIR);
 
       last_set_direction = last_direction_bits;
